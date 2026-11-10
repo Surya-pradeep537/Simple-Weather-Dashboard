@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Weather Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#061b49;--panel:rgba(7,42,105,.82);--panel2:rgba(8,55,130,.78);--line:rgba(90,174,255,.42);--text:#f4f8ff;--muted:#c5d8f5;--accent:#1685ff;--cyan:#36d7ff;--shadow:0 12px 35px #00143c66}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--text);background:radial-gradient(circle at 75% 5%,#1267ba 0,#082d70 38%,#041638 100%);min-height:100vh}
+body.light{--bg:#eaf4ff;--panel:rgba(255,255,255,.88);--panel2:rgba(235,246,255,.94);--line:#b7d8f8;--text:#102c55;--muted:#526b8d;--shadow:0 10px 28px #42658a22;background:linear-gradient(135deg,#dff2ff,#f6fbff)}
+button,input{font:inherit}button{cursor:pointer;border:0;color:var(--text);background:linear-gradient(135deg,#1688ff,#0752d7);padding:11px 15px;border-radius:12px;font-weight:700;box-shadow:0 5px 15px #006bff33}button:hover{filter:brightness(1.12)}input{color:var(--text);background:rgba(255,255,255,.1);border:1px solid var(--line);padding:13px 15px;border-radius:12px;outline:none;min-width:0}input::placeholder{color:var(--muted)}
+.app{display:grid;grid-template-columns:235px 1fr;gap:18px;max-width:1600px;margin:auto;padding:16px;min-height:100vh}
+.sidebar,.panel,.hero{background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);backdrop-filter:blur(14px)}
+.sidebar{padding:22px 16px;display:flex;flex-direction:column;gap:14px}.brand{text-align:center;padding:12px 4px 24px}.brand .logo{font-size:52px}.brand h2{font-size:22px;margin:8px 0}.brand p{color:var(--muted);line-height:1.5;font-style:italic}
+.nav button{display:block;width:100%;text-align:left;margin:6px 0;background:transparent;box-shadow:none;border:1px solid transparent}.nav button.active,.nav button:hover{background:linear-gradient(100deg,#147cff,#0754c9);border-color:#4aaaff}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:13px}
+main{min-width:0}.topbar{display:flex;gap:10px;align-items:center;margin-bottom:16px}.search{display:flex;gap:9px;flex:1}.search input{flex:1}.topbar .iconbtn{background:var(--panel2);border:1px solid var(--line);box-shadow:none}
+.hero{padding:24px 26px;margin-bottom:16px;position:relative;overflow:hidden;background:linear-gradient(110deg,#0870d8e8,#0751a8d9 52%,#083c79d9),url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1600') center/cover}
+.hero-top{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:18px;align-items:center}.current{display:flex;align-items:center;gap:18px}.bigicon{font-size:88px;filter:drop-shadow(0 6px 12px #001c55)}.place{font-size:30px;font-weight:800}.desc{font-size:18px;margin:8px 0}.temp{font-size:68px;font-weight:800;line-height:1.1}.sub{color:#e0efff}.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;border-left:1px solid #ffffff66;padding-left:20px}.metric{padding:8px}.metric b{display:block;font-size:22px;margin-top:5px}.alert{margin-top:18px;background:#c8f7d9;color:#075d2b;padding:12px 16px;border-radius:13px;font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}.panel{padding:18px;min-width:0}.panel h3{margin:0 0 15px;font-size:20px}.forecast{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;text-align:center}.day{padding:10px 4px;border-right:1px solid var(--line)}.day:last-child{border:0}.day .wi{font-size:30px;margin:12px 0}.day strong{display:block;margin:7px 0}.muted{color:var(--muted);font-size:13px}
+.hourly{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;text-align:center}.hour{padding:8px 2px}.hour .wi{font-size:27px;margin:12px 0}.lower{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:16px}.chart-wrap{height:190px}.assistant p,.suggest p{color:var(--muted);line-height:1.45}.chatline{display:flex;gap:7px}.chatline input{flex:1;width:100%}.chat-answer{background:var(--panel2);padding:10px;border-radius:12px;margin-top:10px;min-height:42px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.chip{border:1px solid var(--line);border-radius:20px;padding:6px 10px;color:var(--muted);font-size:12px}
+.section{display:none}.section.active{display:block}.listitem{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--line)}.listitem button{padding:7px 10px}.error{color:#ffb7b7;margin:10px 0;font-weight:700}.footer{text-align:center;color:var(--muted);font-size:12px;padding:18px}
+@media(max-width:1000px){.app{grid-template-columns:1fr}.sidebar{padding:10px 14px}.brand{padding:0}.brand .logo{font-size:34px}.brand p{display:none}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap;width:auto}.sidebar-bottom{display:none}.hero-top{grid-template-columns:1fr 1fr}.metrics{border-left:0;padding-left:0}.lower{grid-template-columns:1fr 1fr}.lower .panel:first-child{grid-column:span 2}}
+@media(max-width:650px){.app{padding:9px;gap:10px}.topbar{flex-wrap:wrap}.search{flex-basis:100%}.hero{padding:18px}.hero-top,.grid2,.lower{grid-template-columns:1fr}.lower .panel:first-child{grid-column:auto}.current{gap:8px}.bigicon{font-size:60px}.place{font-size:24px}.temp{font-size:54px}.metrics{grid-template-columns:repeat(2,1fr)}.forecast{grid-template-columns:repeat(5,minmax(55px,1fr));overflow:auto}.hourly{grid-template-columns:repeat(6,minmax(48px,1fr));overflow:auto}.panel{padding:14px}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="logo">🌤️</div><h2>Simple Weather<br>Dashboard</h2><p>Know the Weather,<br>Plan Better ☀️</p></div>
+  <nav class="nav">
+    <button class="active" data-tab="home">🏠 Home</button>
+    <button data-tab="favorites">⭐ Favorite Cities</button>
+    <button data-tab="history">🕘 Weather History</button>
+    <button data-tab="settings">⚙️ Settings</button>
+    <button data-tab="about">ℹ️ About</button>
+  </nav>
+  <div class="sidebar-bottom">🌦️ Weather data by Open-Meteo<br><br>Made for FSD-2 Project</div>
+</aside>
+<main>
+  <div class="topbar">
+    <div class="search"><input id="cityInput" placeholder="Search for a city (e.g. Guntur, Vijayawada)"><button id="searchBtn">🔍 Search</button></div>
+    <button class="iconbtn" id="voiceBtn" title="Voice search">🎙️</button>
+    <button id="locationBtn">📍 My Location</button>
+    <button class="iconbtn" id="unitBtn">°C / °F</button>
+  </div>
+  <div id="home" class="section active">
+    <div class="hero">
+      <div class="hero-top">
+        <div class="current"><div class="bigicon" id="weatherIcon">🌤️</div><div><div class="place" id="cityName">Search a city</div><div class="desc" id="description">Current weather</div><div class="temp" id="temperature">--°</div><div class="sub">Feels like <span id="feels">--</span> · Humidity <span id="humidity">--</span></div></div></div>
+        <div class="metrics">
+          <div class="metric">🌅 Sunrise<b id="sunrise">--</b></div><div class="metric">🌇 Sunset<b id="sunset">--</b></div>
+          <div class="metric">💨 Wind<b id="wind">--</b></div><div class="metric">🌧️ Rain chance<b id="rain">--</b></div>
+        </div>
+        <div class="metrics">
+          <div class="metric">🍃 Air Quality<b id="aqi">--</b><span class="muted" id="aqiLabel">PM2.5</span></div>
+          <div class="metric">☀️ UV Index<b id="uv">--</b><span class="muted">Today's maximum</span></div>
+        </div>
+      </div>
+      <div class="alert" id="weatherAlert">🔔 Search a city to view live weather information.</div>
+    </div>
+    <div class="grid2">
+      <div class="panel"><h3>🗓️ 5-Day Forecast</h3><div class="forecast" id="dailyForecast"><div class="muted">Search a city to load forecast.</div></div></div>
+      <div class="panel"><h3>🕒 Hourly Forecast</h3><div class="hourly" id="hourlyForecast"><div class="muted">Hourly forecast will appear here.</div></div></div>
+    </div>
+    <div class="lower">
+      <div class="panel"><h3>📈 Temperature Chart</h3><div class="chart-wrap"><canvas id="weatherChart"></canvas></div></div>
+      <div class="panel assistant"><h3>🤖 Smart Weather Assistant</h3><p>Ask a simple question about today's weather.</p><div class="chatline"><input id="question" placeholder="Will I need an umbrella?"><button id="askBtn">Ask</button></div><div class="chat-answer" id="answer">Hello! Search a city and ask me about its weather.</div></div>
+      <div class="panel suggest"><h3>💡 Smart Suggestions</h3><p id="clothing">👕 Weather-based clothing suggestions will appear here.</p><p id="umbrella">☂️ Umbrella suggestion will appear here.</p><div class="chips"><span class="chip">Live data</span><span class="chip">Student project</span><span class="chip">Responsive UI</span></div></div>
+    </div>
+  </div>
+  <div id="favorites" class="section panel"><h3>⭐ Favorite Cities</h3><p class="muted">Save cities you want to check quickly.</p><div id="favoriteList"></div></div>
+  <div id="history" class="section panel"><h3>🕘 Recent Searches</h3><div id="historyList"></div></div>
+  <div id="settings" class="section panel"><h3>⚙️ Settings</h3><p>Theme</p><button id="themeBtn">🌙 Toggle Dark / Light Mode</button><p style="margin-top:20px">Temperature unit</p><button id="settingsUnit">Switch °C / °F</button></div>
+  <div id="about" class="section panel"><h3>ℹ️ About This Project</h3><p>This Simple Weather Dashboard is developed using HTML, CSS and JavaScript. It retrieves weather information from the free Open-Meteo API and displays current conditions, hourly forecast, 5-day forecast and air-quality information.</p><p class="muted">No API key required. An active internet connection is required. Browser location access may require HTTPS or localhost.</p></div>
+  <div class="footer">Simple Weather Dashboard · HTML | CSS | JavaScript · Weather data: Open-Meteo</div>
+</main>
+</div>
+<script>
+let isF=false, latest=null, chart=null;
+const $=id=>document.getElementById(id);
+const weatherMap={0:['☀️','Clear sky'],1:['🌤️','Mainly clear'],2:['⛅','Partly cloudy'],3:['☁️','Overcast'],45:['🌫️','Fog'],48:['🌫️','Depositing rime fog'],51:['🌦️','Light drizzle'],53:['🌦️','Drizzle'],55:['🌧️','Heavy drizzle'],61:['🌧️','Slight rain'],63:['🌧️','Rain'],65:['🌧️','Heavy rain'],71:['🌨️','Light snow'],73:['🌨️','Snow'],75:['❄️','Heavy snow'],80:['🌦️','Rain showers'],81:['🌧️','Rain showers'],82:['⛈️','Heavy showers'],95:['⛈️','Thunderstorm'],96:['⛈️','Thunderstorm with hail'],99:['⛈️','Heavy thunderstorm']};
+function weather(code){return weatherMap[code]||['🌤️','Variable conditions']}
+function temp(c){return isF?Math.round(c*9/5+32):Math.round(c)}
+function time(s){return s?s.slice(11,16):'--'}
+function save(key,val){localStorage.setItem(key,JSON.stringify(val))}
+function read(key){try{return JSON.parse(localStorage.getItem(key)||'[]')}catch(e){return []}}
+function showError(msg){$('weatherAlert').textContent='⚠️ '+msg;$('weatherAlert').style.background='#ffe0e0';$('weatherAlert').style.color='#8a1717'}
+function setAlert(msg){$('weatherAlert').textContent='🔔 '+msg;$('weatherAlert').style.background='#c8f7d9';$('weatherAlert').style.color='#075d2b'}
+async function searchCity(city){
+ city=city.trim();if(!city){showError('Please enter a city name.');return}
+ $('searchBtn').textContent='Loading...';$('searchBtn').disabled=true;
+ try{
+  const g=await fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(city)+'&count=1&language=en&format=json');
+  if(!g.ok)throw new Error('Could not connect to the location service.');
+  const gd=await g.json();if(!gd.results?.length)throw new Error('City not found. Try another spelling.');
+  const loc=gd.results[0];await loadWeather(loc);
+ }catch(e){showError(e.message+' Check your internet connection and try again.')}
+ finally{$('searchBtn').textContent='🔍 Search';$('searchBtn').disabled=false}
+}
+async function loadWeather(loc){
+ const params='latitude='+loc.latitude+'&longitude='+loc.longitude+'&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max&timezone=auto&forecast_days=5';
+ const r=await fetch('https://api.open-meteo.com/v1/forecast?'+params);if(!r.ok)throw new Error('Weather service is temporarily unavailable.');
+ const d=await r.json();let aq=null;try{const ar=await fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude='+loc.latitude+'&longitude='+loc.longitude+'&current=pm2_5,us_aqi&timezone=auto');if(ar.ok)aq=await ar.json()}catch(e){}
+ latest={loc,d,aq};render(loc,d,aq);$('cityInput').value=loc.name;let hist=read('weatherHistory');hist=[loc.name,...hist.filter(x=>x!==loc.name)].slice(0,8);save('weatherHistory',hist);renderLists();
+}
+function render(loc,d,aq){
+ const c=d.current,day=d.daily,w=weather(c.weather_code);
+ $('cityName').textContent='📍 '+loc.name+(loc.admin1?', '+loc.admin1:'');
+ $('description').textContent=w[1];$('weatherIcon').textContent=w[0];$('temperature').textContent=temp(c.temperature_2m)+'°'+(isF?'F':'C');
+ $('feels').textContent=temp(c.apparent_temperature)+'°'+(isF?'F':'C');$('humidity').textContent=c.relative_humidity_2m+'%';
+ $('wind').textContent=Math.round(c.wind_speed_10m)+' km/h';$('rain').textContent=(day.precipitation_probability_max?.[0]??0)+'%';
+ $('sunrise').textContent=time(day.sunrise[0]);$('sunset').textContent=time(day.sunset[0]);$('uv').textContent=day.uv_index_max[0]??'--';
+ $('aqi').textContent=aq?.current?.us_aqi??'--';$('aqiLabel').textContent=aq?.current?.pm2_5!=null?'PM2.5: '+aq.current.pm2_5+' μg/m³':'Air quality unavailable';
+ const desc=w[1].toLowerCase();setAlert(c.precipitation>0?'Precipitation is currently reported. Carry an umbrella if going outside.':'Weather data updated for '+loc.name+'.');
+ $('dailyForecast').innerHTML=day.time.map((date,i)=>{let wi=weather(day.weather_code[i]);return `<div class="day"><b>${i===0?'Today':new Date(date+'T12:00:00').toLocaleDateString('en',{weekday:'short'})}</b><div class="muted">${date.slice(5)}</div><div class="wi">${wi[0]}</div><strong>${temp(day.temperature_2m_max[i])}°</strong><span class="muted">${temp(day.temperature_2m_min[i])}°</span></div>`}).join('');
+ const h=d.hourly,now=new Date();let start=h.time.findIndex(t=>new Date(t)>=now);if(start<0)start=0;let indices=Array.from({length:6},(_,i)=>Math.min(start+i,h.time.length-1));
+ $('hourlyForecast').innerHTML=indices.map(i=>{let wi=weather(h.weather_code[i]);return `<div class="hour"><b>${time(h.time[i])}</b><div class="wi">${wi[0]}</div><strong>${temp(h.temperature_2m[i])}°</strong><div class="muted">💧 ${h.precipitation_probability[i]??0}%</div></div>`}).join('');
+ const labels=day.time.map(x=>new Date(x+'T12:00:00').toLocaleDateString('en',{weekday:'short'}));
+ if(chart)chart.destroy();chart=new Chart($('weatherChart'),{type:'line',data:{labels,datasets:[{label:'Max temperature',data:day.temperature_2m_max.map(temp),borderColor:'#ffb13b',backgroundColor:'#ffb13b22',fill:true,tension:.35},{label:'Min temperature',data:day.temperature_2m_min.map(temp),borderColor:'#31c7ff',tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:getComputedStyle(document.body).getPropertyValue('--text')}}},scales:{x:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--muted')}},y:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--muted')}}}}});
+ const hot=c.temperature_2m>=30; $('clothing').textContent=hot?'👕 It may feel warm. Light, comfortable clothing is a good choice.':'🧥 Consider comfortable clothing suitable for cooler conditions.';
+ $('umbrella').textContent=(day.precipitation_probability_max[0]??0)>=40?'☂️ Rain is possible. Consider carrying an umbrella.':'☂️ No high rain probability is forecast right now.';
+}
+function toggleUnit(){isF=!isF;if(latest)render(latest.loc,latest.d,latest.aq);$('unitBtn').textContent=isF?'°F / °C':'°C / °F'}
+function renderLists(){
+ const fav=read('weatherFavorites'),hist=read('weatherHistory');
+ $('favoriteList').innerHTML=fav.length?fav.map(x=>`<div class="listitem"><span>⭐ ${x}</span><button onclick="searchCity('${x.replace(/'/g,"\\'")}')">View</button></div>`).join(''):'<p class="muted">No favorite cities yet. Search a city and use Add Favorite below.</p>';
+ $('historyList').innerHTML=hist.length?hist.map(x=>`<div class="listitem"><span>🕘 ${x}</span><button onclick="searchCity('${x.replace(/'/g,"\\'")}')">Search</button></div>`).join(''):'<p class="muted">No search history yet.</p>';
+}
+function answerQuestion(){
+ const q=$('question').value.toLowerCase();if(!latest){$('answer').textContent='Please search for a city first.';return}
+ const d=latest.d,c=d.current,prob=d.daily.precipitation_probability_max[0]??0;
+ if(q.includes('rain')||q.includes('umbrella'))$('answer').textContent=prob>=40?'Rain may be possible today ('+prob+'% chance). Carry an umbrella if needed.':'The forecast shows a relatively low chance of rain today ('+prob+'%).';
+ else if(q.includes('hot')||q.includes('temperature'))$('answer').textContent='The current temperature is '+temp(c.temperature_2m)+'°'+(isF?'F':'C')+'. Feels like '+temp(c.apparent_temperature)+'°'+(isF?'F':'C')+'.';
+ else if(q.includes('wind'))$('answer').textContent='Current wind speed is '+Math.round(c.wind_speed_10m)+' km/h.';
+ else $('answer').textContent=weather(c.weather_code)[1]+', '+temp(c.temperature_2m)+'°'+(isF?'F':'C')+' in '+latest.loc.name+'. This is a simple built-in assistant, not a live AI chatbot.';
+}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')}));
+$('searchBtn').onclick=()=>searchCity($('cityInput').value);$('cityInput').addEventListener('keydown',e=>{if(e.key==='Enter')searchCity($('cityInput').value)});$('unitBtn').onclick=toggleUnit;$('settingsUnit').onclick=toggleUnit;$('askBtn').onclick=answerQuestion;$('question').addEventListener('keydown',e=>{if(e.key==='Enter')answerQuestion()});
+$('locationBtn').onclick=()=>{if(!navigator.geolocation){showError('Location is not supported by this browser.');return}navigator.geolocation.getCurrentPosition(async p=>{try{await loadWeather({name:'My Location',latitude:p.coords.latitude,longitude:p.coords.longitude})}catch(e){showError(e.message||'Unable to get location weather.')}},()=>showError('Location permission denied. Allow location access, or search for a city.'),{enableHighAccuracy:false,timeout:12000,maximumAge:300000})};
+$('voiceBtn').onclick=()=>{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){showError('Voice search is not supported in this browser.');return}const rec=new SR();rec.lang='en-IN';rec.onresult=e=>{const val=e.results[0][0].transcript;$('cityInput').value=val;searchCity(val)};rec.onerror=()=>showError('Could not recognize voice. Try again.');rec.start()};
+$('themeBtn').onclick=()=>document.body.classList.toggle('light');
+$('favoriteList').addEventListener('click',()=>{});
+const addFav=document.createElement('button');addFav.textContent='⭐ Add Current City to Favorites';addFav.style.margin='0 0 16px';addFav.onclick=()=>{if(!latest)return;let f=read('weatherFavorites');if(!f.includes(latest.loc.name))f.push(latest.loc.name);save('weatherFavorites',f);renderLists();setAlert(latest.loc.name+' added to favorites.')};$('home').insertBefore(addFav,$('home').children[1]);
+renderLists();searchCity('Guntur');
+</script>
+</body>
+</html>
